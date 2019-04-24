@@ -10,12 +10,13 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.MemoryFile;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.SetMultimap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.annotation.RealObject;
@@ -26,7 +27,7 @@ import org.robolectric.util.ReflectionHelpers.ClassParameter;
 public class ShadowSensorManager {
   public boolean forceListenersToFail = false;
   private final Map<Integer, Sensor> sensorMap = new HashMap<>();
-  private final List<SensorEventListener> listeners = new CopyOnWriteArrayList<>();
+  private final SetMultimap<Sensor, SensorEventListener> listeners = LinkedHashMultimap.create();
 
   @RealObject private SensorManager realObject;
 
@@ -83,24 +84,24 @@ public class ShadowSensorManager {
     if (forceListenersToFail) {
       return false;
     }
-    if (!listeners.contains(listener)) {
-      listeners.add(listener);
-    }
+    listeners.put(sensor, listener);
     return true;
   }
 
   @Implementation
   protected void unregisterListener(SensorEventListener listener, Sensor sensor) {
-    listeners.remove(listener);
+    listeners.remove(sensor, listener);
   }
 
   @Implementation
   protected void unregisterListener(SensorEventListener listener) {
-    listeners.remove(listener);
+    for (Sensor sensor : listeners.keySet()) {
+      listeners.remove(sensor, listener);
+    }
   }
 
   public boolean hasListener(SensorEventListener listener) {
-    return listeners.contains(listener);
+    return listeners.values().contains(listener);
   }
 
   /**
@@ -108,12 +109,12 @@ public class ShadowSensorManager {
    * the list is unmodifiable, any attempt to modify it will throw an exception.
    */
   public List<SensorEventListener> getListeners() {
-    return Collections.unmodifiableList(listeners);
+    return Collections.unmodifiableList(new ArrayList<>(listeners.values()));
   }
 
   /** Propagates the {@code event} to all registered listeners. */
   public void sendSensorEventToListeners(SensorEvent event) {
-    for (SensorEventListener listener : listeners) {
+    for (SensorEventListener listener : new ArrayList<>(listeners.get(event.sensor))) {
       listener.onSensorChanged(event);
     }
   }
