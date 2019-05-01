@@ -65,6 +65,7 @@ public class AndroidConfigurer {
         .doNotAcquireClass(XmlBlock.class);
 
     builder
+        .doNotAcquirePackage("org.mockito")
         .doNotAcquirePackage("javax.")
         .doNotAcquirePackage("org.junit")
         .doNotAcquirePackage("org.hamcrest")
