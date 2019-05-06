@@ -14,12 +14,14 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.MulticastLock;
 import android.provider.Settings;
+import android.util.ArraySet;
 import android.util.Pair;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.HiddenApi;
@@ -44,6 +46,7 @@ public class ShadowWifiManager {
   private List<ScanResult> scanResults;
   private final Map<Integer, WifiConfiguration> networkIdToConfiguredNetworks = new LinkedHashMap<>();
   private Pair<Integer, Boolean> lastEnabledNetwork;
+  private final Set<Integer> enabledNetworks = new ArraySet<>();
   private DhcpInfo dhcpInfo;
   private boolean startScanSucceeds = true;
   private boolean is5GHzBandSupported = false;
@@ -159,9 +162,15 @@ public class ShadowWifiManager {
   }
 
   @Implementation
-  protected boolean enableNetwork(int netId, boolean disableOthers) {
-    lastEnabledNetwork = new Pair<>(netId, disableOthers);
+  protected boolean enableNetwork(int netId, boolean attemptConnect) {
+    lastEnabledNetwork = new Pair<>(netId, attemptConnect);
+    enabledNetworks.add(netId);
     return true;
+  }
+
+  @Implementation
+  protected boolean disableNetwork(int netId) {
+    return enabledNetworks.remove(netId);
   }
 
   @Implementation
@@ -324,6 +333,11 @@ public class ShadowWifiManager {
 
   public Pair<Integer, Boolean> getLastEnabledNetwork() {
     return lastEnabledNetwork;
+  }
+
+  /** Whether the network is enabled or not. */
+  public boolean isNetworkEnabled(int netId) {
+    return enabledNetworks.contains(netId);
   }
 
   /** Returns the number of WifiLocks and MulticastLocks that are currently acquired. */
