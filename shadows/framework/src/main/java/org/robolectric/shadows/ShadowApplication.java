@@ -125,6 +125,10 @@ public class ShadowApplication extends ShadowContextWrapper {
     getShadowInstrumentation().setUnbindServiceShouldThrowIllegalArgument(flag);
   }
 
+  public void setThrowInBindService(SecurityException e) {
+    getShadowInstrumentation().setThrowInBindService(e);
+  }
+
   public List<ServiceConnection> getUnboundServiceConnections() {
     return getShadowInstrumentation().getUnboundServiceConnections();
   }
@@ -191,6 +195,10 @@ public class ShadowApplication extends ShadowContextWrapper {
 
   public void declareActionUnbindable(String action) {
     getShadowInstrumentation().declareActionUnbindable(action);
+  }
+
+  public void declareComponentUnbindable(ComponentName component) {
+    getShadowInstrumentation().declareComponentUnbindable(component);
   }
 
   public PowerManager.WakeLock getLatestWakeLock() {
