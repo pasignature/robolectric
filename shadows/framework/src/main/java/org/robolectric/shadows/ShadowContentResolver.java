@@ -770,11 +770,30 @@ public class ShadowContentResolver {
     this.contentProviderResults = contentProviderResults;
   }
 
+  private final Map<Uri, RuntimeException> exceptionsForRegisteringContentObservers =
+      new HashMap<>();
+
+  /** Makes {@link #registerContentObserver} throw the specified exception for the specified URI. */
+  public void setExceptionWhenRegisteringContentObserver(Uri uri, RuntimeException exception) {
+    exceptionsForRegisteringContentObservers.put(uri, exception);
+  }
+
+  /**
+   * Clears an exception previously set with {@link #setExceptionWhenRegisteringContentObserver(Uri,
+   * RuntimeException)}.
+   */
+  public void clearExceptionForRegisteringContentObserver(Uri uri) {
+    exceptionsForRegisteringContentObservers.remove(uri);
+  }
+
   @Implementation
   protected void registerContentObserver(
       Uri uri, boolean notifyForDescendents, ContentObserver observer) {
     if (uri == null || observer == null) {
       throw new NullPointerException();
+    }
+    if (exceptionsForRegisteringContentObservers.containsKey(uri)) {
+      throw exceptionsForRegisteringContentObservers.get(uri);
     }
     contentObservers.add(new ContentObserverEntry(uri, notifyForDescendents, observer));
   }
