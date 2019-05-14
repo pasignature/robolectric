@@ -507,4 +507,12 @@ public class ShadowTelephonyManagerTest {
     shadowOf(telephonyManager).setDataEnabled(true);
     assertThat(telephonyManager.isDataEnabled()).isTrue();
   }
+
+  @Test
+  public void setDataStateChangesDataState() {
+    shadowOf(telephonyManager).setDataState(TelephonyManager.DATA_CONNECTING);
+    assertThat(telephonyManager.getDataState()).isEqualTo(TelephonyManager.DATA_CONNECTING);
+    shadowOf(telephonyManager).setDataState(TelephonyManager.DATA_CONNECTED);
+    assertThat(telephonyManager.getDataState()).isEqualTo(TelephonyManager.DATA_CONNECTED);
+  }
 }
